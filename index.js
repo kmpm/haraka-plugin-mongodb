@@ -111,7 +111,7 @@ exports.queue_outbound_to_mongodb = function (next, connection) {
 	var plugin = this;
 	var plugin = this;
 	if (connection.relaying) {
-		return plugin.to_mongodb(next, connection, plugin.cfg.collections.relay);
+		return plugin.to_mongodb(next, connection, plugin.cfg.collections.relay, CONT);
 	}
 	return next();
 };
@@ -119,11 +119,11 @@ exports.queue_outbound_to_mongodb = function (next, connection) {
 // Hook for queue-ing
 exports.queue_to_mongodb = function(next, connection) {
 	var plugin = this;
-	plugin.to_mongodb(next, connection, plugin.cfg.collections.queue);
+	plugin.to_mongodb(next, connection, plugin.cfg.collections.queue, OK);
 }
 
 
-exports.to_mongodb = function (next, connection, collection) {
+exports.to_mongodb = function (next, connection, collection, success_result) {
 
 	var plugin = this;
 	var body = connection.transaction.body;
@@ -195,7 +195,7 @@ exports.to_mongodb = function (next, connection, collection) {
 				plugin.lognotice('--------------------------------------');
 				plugin.lognotice(' Successfully stored the email !!! ');
 				plugin.lognotice('--------------------------------------');
-				next(OK);
+				next(success_result);
 			}
 		});
 
