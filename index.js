@@ -35,6 +35,7 @@ exports.register = function () {
 	if (plugin.cfg.enable.queue) {
 		plugin.register_hook('data', 'enable_transaction_body_parse');
 		plugin.register_hook('queue', 'queue_to_mongodb');
+		plugin.register_hook('queue_outbound', 'queue_outbound_to_mongodb')
 	}
 	// Enable for delivery results
 	if (plugin.cfg.enable.delivery) {
@@ -106,8 +107,23 @@ exports.enable_transaction_body_parse = function(next, connection) {
 	next();
 };
 
+exports.queue_outbound_to_mongodb = function (next, connection) {
+	var plugin = this;
+	var plugin = this;
+	if (connection.relaying) {
+		return plugin.to_mongodb(next, connection, plugin.cfg.collections.relay);
+	}
+	return next();
+};
+
 // Hook for queue-ing
 exports.queue_to_mongodb = function(next, connection) {
+	var plugin = this;
+	plugin.to_mongodb(next, connection, plugin.cfg.collections.queue);
+}
+
+
+exports.to_mongodb = function (next, connection, collection) {
 
 	var plugin = this;
 	var body = connection.transaction.body;
@@ -169,7 +185,7 @@ exports.queue_to_mongodb = function(next, connection) {
 		// 	'size' : connection.transaction.data_bytes
 		// };
 
-		server.notes.mongodb.collection(plugin.cfg.collections.queue).insert(_email, function(err) {
+		server.notes.mongodb.collection(collection).insert(_email, function(err) {
 			if (err) {
 				plugin.logerror('--------------------------------------');
 				plugin.logerror('ERROR ON INSERT : ', err);
